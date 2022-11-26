@@ -2,6 +2,7 @@ package main
 
 import (
 	"errors"
+	"fmt"
 	"log"
 	"os"
 	"time"
@@ -29,7 +30,7 @@ func main() {
 	if getOldErr != nil {
 		log.Fatal(getOldErr)
 	} else {
-		print(oldestFile)
+		fmt.Println(oldestFile)
 	}
 }
 
