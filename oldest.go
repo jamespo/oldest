@@ -2,6 +2,7 @@ package main
 
 import (
 	"errors"
+	"flag"
 	"fmt"
 	"log"
 	"os"
@@ -11,29 +12,67 @@ import (
 // declare fn type for comparators
 type fn func(time.Time, time.Time) bool
 
-func main() {
-	// get CLI args path or default to cwd
+func myFlagUsage() {
+	fmt.Printf("Usage: %s [OPTIONS] [path to search]\n", os.Args[0])
+	flag.PrintDefaults()
+	fmt.Println("Note: Search is not recursive")
+}
+
+// getArgs - read flags to cli
+func getArgs() (string, bool) {
+	flag.Usage = myFlagUsage
+	oldestArgPtr := flag.Bool("oldest", false, "Search for oldest")
+	newestArgPtr := flag.Bool("newest", false, "Search for newest")
+	flag.Parse()
+
 	var path string
+
+	if flag.NArg() == 1 {
+		// path specified
+		path = flag.Args()[0]
+	}
+
+	findOldest := true
+
+	if *oldestArgPtr {
+		findOldest = true
+	} else if *newestArgPtr {
+		findOldest = false
+	}
+
+	// validate path - default to CWD if empty
 	var err error
-	if len(os.Args) < 2 {
+	if path == "" {
 		path, err = os.Getwd()
 		if err != nil {
 			_ = path // get around path not used
 			log.Fatal(err)
 		}
 	} else {
-		path = os.Args[1]
 		if !isDirectory(path) {
 			log.Fatal("Not a directory")
 		}
 	}
 
-	oldestFile, getOldErr := getOldest(path)
+	return path, findOldest
+}
 
-	if getOldErr != nil {
-		log.Fatal(getOldErr)
+func main() {
+	path, findOldest := getArgs()
+
+	var fileResult string
+	var fileResultErr error
+
+	if findOldest {
+		fileResult, fileResultErr = getOldest(path)
 	} else {
-		fmt.Println(oldestFile)
+		fileResult, fileResultErr = getNewest(path)
+	}
+
+	if fileResultErr != nil {
+		log.Fatal(fileResultErr)
+	} else {
+		fmt.Println(fileResult)
 	}
 }
 
