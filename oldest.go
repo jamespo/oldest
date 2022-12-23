@@ -8,8 +8,11 @@ import (
 	"time"
 )
 
+// declare fn type for comparators
+type fn func(time.Time, time.Time) bool
+
 func main() {
-	// get path or default to cwd
+	// get CLI args path or default to cwd
 	var path string
 	var err error
 	if len(os.Args) < 2 {
@@ -45,23 +48,45 @@ func isDirectory(path string) bool {
 	return fileInfo.IsDir()
 }
 
+// fileIsOlder checks if fileModTime passed is older than oldestFileTime
+func fileIsOlder(fileModTime time.Time, oldestFileTime time.Time) bool {
+	return fileModTime.Before(oldestFileTime)
+}
+
+// fileIsNewer checks if fileModTime passed is newer than newestFileTime
+func fileIsNewer(fileModTime time.Time, newestFileTime time.Time) bool {
+	return fileModTime.After(newestFileTime)
+}
+
+// getOldest returns oldest file in path
 func getOldest(path string) (string, error) {
+	return findFile(path, fileIsOlder)
+}
+
+// getNewest returns newest file in path
+func getNewest(path string) (string, error) {
+	return findFile(path, fileIsNewer)
+}
+
+// findFile - gets the oldest or newest file from supplied path and comparator
+func findFile(path string, comparator fn) (string, error) {
 	files, err := os.ReadDir(path)
 	if err != nil {
 		return "", err
 	}
 
-	var oldestFile string
-	var oldestFileTime time.Time
+	var oldestOrNewestFile string
+	var oldestOrNewestFileTime time.Time
 	unset := true
 
 	// go through files & get oldest
 	for _, file := range files {
 		if !file.IsDir() {
 			fileInfo, _ := file.Info()
-			if unset || fileInfo.ModTime().Before(oldestFileTime) {
-				oldestFile = file.Name()
-				oldestFileTime = fileInfo.ModTime()
+			fileModTime := fileInfo.ModTime()
+			if unset || comparator(fileModTime, oldestOrNewestFileTime) {
+				oldestOrNewestFile = file.Name()
+				oldestOrNewestFileTime = fileModTime
 				unset = false
 			}
 		}
@@ -71,6 +96,6 @@ func getOldest(path string) (string, error) {
 	if unset {
 		return "", errors.New("no files found")
 	} else {
-		return oldestFile, nil
+		return oldestOrNewestFile, nil
 	}
 }
