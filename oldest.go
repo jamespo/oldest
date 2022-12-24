@@ -13,6 +13,9 @@ import (
 // declare fn type for comparators
 type fn func(time.Time, time.Time) bool
 
+// store CLI args
+var verbose bool
+
 func myFlagUsage() {
 	fmt.Printf("Usage: %s [OPTIONS] [path to search]\n", path.Clean(os.Args[0]))
 	flag.PrintDefaults()
@@ -24,6 +27,8 @@ func getArgs() (string, bool) {
 	flag.Usage = myFlagUsage
 	oldestArgPtr := flag.Bool("oldest", false, "Search for oldest")
 	newestArgPtr := flag.Bool("newest", false, "Search for newest")
+	flag.BoolVar(&verbose, "verbose", false, "Verbose output")
+	flag.BoolVar(&verbose, "v", false, "Verbose output")
 	flag.Parse()
 
 	var dirPath string
@@ -49,11 +54,11 @@ func getArgs() (string, bool) {
 	if dirPath == "" {
 		dirPath, err = os.Getwd()
 		if err != nil {
-			log.Fatal(err)
+			quit(err.Error())
 		}
 	} else {
 		if !isDirectory(dirPath) {
-			log.Fatal("Not a directory")
+			quit("Not a directory")
 		}
 	}
 
@@ -73,7 +78,7 @@ func main() {
 	}
 
 	if fileResultErr != nil {
-		log.Fatal(fileResultErr)
+		quit(fileResultErr.Error())
 	} else {
 		fmt.Println(fileResult)
 	}
@@ -143,5 +148,14 @@ func findFile(path string, comparator fn) (string, error) {
 		return "", errors.New("no files found")
 	} else {
 		return oldestOrNewestFile, nil
+	}
+}
+
+// quit - exit in error, print quitMsg if verbose
+func quit(quitMsg string) {
+	if verbose {
+		log.Fatal(quitMsg)
+	} else {
+		os.Exit(1)
 	}
 }
