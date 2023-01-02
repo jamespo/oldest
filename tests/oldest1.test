@@ -1,3 +1,10 @@
-$ ./oldest -h
-> /Usage/
->2 /oldest/
+# check help
+$$$ ./oldest -h
+>>> /Usage/
+>>>2 /oldest/
+
+# find oldest file
+$$$ ./oldest testdir
+>>> /^a$/
+>>>2
+>>>=0

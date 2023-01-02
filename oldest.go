@@ -80,7 +80,7 @@ func main() {
 	if fileResultErr != nil {
 		quit(fileResultErr.Error())
 	} else {
-		fmt.Println(fileResult)
+		fmt.Print(fileResult)
 	}
 }
 
